@@ -9,14 +9,15 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+var scrapers = []scraper.Scraper{
+	scraper.NewFacebookScraper(),
+	scraper.NewYoutubeScraper(),
+}
+
 func OnMessageCreate(client *discordgo.Session, message *discordgo.MessageCreate) {
 	if message.Author.Bot || message.WebhookID != "" {
 		return
 	}
-
-	facebookScraper := scraper.NewFacebookScraper()
-	youtubeScraper := scraper.NewYoutubeScraper()
-	scrapers := [2]scraper.Scraper{facebookScraper, youtubeScraper}
 
 	var wg sync.WaitGroup
 
