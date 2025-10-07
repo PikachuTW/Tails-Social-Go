@@ -14,8 +14,9 @@ func OnMessageCreate(client *discordgo.Session, message *discordgo.MessageCreate
 	}
 
 	facebookScraper := scraper.NewFacebookScraper()
+	youtubeScraper := scraper.NewYoutubeScraper()
 
-	for _, s := range []scraper.Scraper{facebookScraper} {
+	for _, s := range [2]scraper.Scraper{facebookScraper, youtubeScraper} {
 		match := s.Match(message.Content)
 		if match == "" {
 			continue
@@ -24,6 +25,10 @@ func OnMessageCreate(client *discordgo.Session, message *discordgo.MessageCreate
 		data, err := s.FetchData(match)
 		if err != nil {
 			log.Println(err)
+			continue
+		}
+		if data == nil {
+			log.Printf("No data found for %s", match)
 			continue
 		}
 
