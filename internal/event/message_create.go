@@ -3,6 +3,7 @@ package event
 import (
 	"fmt"
 	"log"
+	"sync"
 	"tails-social-go/internal/scraper"
 
 	"github.com/bwmarrin/discordgo"
@@ -15,41 +16,51 @@ func OnMessageCreate(client *discordgo.Session, message *discordgo.MessageCreate
 
 	facebookScraper := scraper.NewFacebookScraper()
 	youtubeScraper := scraper.NewYoutubeScraper()
+	scrapers := [2]scraper.Scraper{facebookScraper, youtubeScraper}
 
-	for _, s := range [2]scraper.Scraper{facebookScraper, youtubeScraper} {
-		match := s.Match(message.Content)
-		if match == "" {
-			continue
-		}
+	var wg sync.WaitGroup
 
-		data, err := s.FetchData(match)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if data == nil {
-			log.Printf("No data found for %s", match)
-			continue
-		}
+	for _, s := range scrapers {
+		wg.Add(1)
 
-		log.Println(data.Image)
+		go func(s scraper.Scraper) {
+			defer wg.Done()
 
-		_, err = client.ChannelMessageSendEmbedReply(message.ChannelID, &discordgo.MessageEmbed{
-			URL:         data.URL,
-			Title:       data.Title,
-			Description: data.Description,
-			Color:       s.EmbedColor(),
-			Footer: &discordgo.MessageEmbedFooter{
-				Text: fmt.Sprintf("%s | Sent by %s", s.SourceName(), message.Author.GlobalName),
-			},
-			Image: &discordgo.MessageEmbedImage{
-				URL: data.Image,
-			},
-		}, message.Reference())
+			match := s.Match(message.Content)
+			if match == "" {
+				return
+			}
 
-		if err != nil {
-			log.Println(err)
-			return
-		}
+			data, err := s.FetchData(match)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if data == nil {
+				log.Printf("No data found for %s", match)
+				return
+			}
+
+			_, err = client.ChannelMessageSendEmbedReply(message.ChannelID, &discordgo.MessageEmbed{
+				URL:         data.URL,
+				Title:       data.Title,
+				Description: data.Description,
+				Color:       s.EmbedColor(),
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("%s | Sent by %s", s.SourceName(), message.Author.GlobalName),
+				},
+				Image: &discordgo.MessageEmbedImage{
+					URL: data.Image,
+				},
+			}, message.Reference())
+
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		}(s)
 	}
+
+	wg.Wait()
 }
