@@ -12,6 +12,7 @@ import (
 var scrapers = []scraper.Scraper{
 	scraper.NewFacebookScraper(),
 	scraper.NewYoutubeScraper(),
+	scraper.NewThreadsScraper(),
 }
 
 func OnMessageCreate(client *discordgo.Session, message *discordgo.MessageCreate) {

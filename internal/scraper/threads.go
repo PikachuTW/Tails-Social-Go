@@ -5,21 +5,21 @@ import (
 	"tails-social-go/internal/util"
 )
 
-type FacebookScraper struct {
+type ThreadsScraper struct {
 	BaseScraper
 }
 
-func NewFacebookScraper() Scraper {
-	return &FacebookScraper{
+func NewThreadsScraper() Scraper {
+	return &ThreadsScraper{
 		BaseScraper{
-			sourceName: "Facebook",
-			regex:      regexp.MustCompile("https://www\\.facebook\\.com/\\S+"),
-			embedColor: 0x1877F2,
+			sourceName: "Threads",
+			regex:      regexp.MustCompile("https://www\\.threads\\.com/\\S+"),
+			embedColor: 0,
 		},
 	}
 }
 
-func (scraper *FacebookScraper) FetchData(link string) (*FetchedData, error) {
+func (scraper *ThreadsScraper) FetchData(link string) (*FetchedData, error) {
 	doc, err := util.GetDoc(link)
 	if err != nil {
 		return nil, err
